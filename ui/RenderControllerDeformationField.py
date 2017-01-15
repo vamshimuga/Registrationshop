@@ -1,5 +1,5 @@
 """
-RenderController
+RenderControllerDeformationField
 
 Class that controls the volume property and settings
 for the render widget.
@@ -17,18 +17,29 @@ from PySide.QtCore import QObject
 from PySide.QtCore import Signal
 from PySide.QtCore import Slot
 from PySide.QtGui import QWidget
-from ui.visualizations import VisualizationTypeSimple
 from ui.visualizations import VisualizationTypeMIP
+from ui.visualizations.VolumeVisualization import VisualizationTypeSimpleDeformation
+from ui.visualizations.VolumeVisualization import VisualizationTypeSimpleDeformationJ
+from ui.visualizations.VolumeVisualization import VisualizationTypeSimpleDeformationB
 from ui.visualizations import VolumeVisualizationFactory
 from ui.visualizations import VolumeVisualizationWrapper
 from core.vtkObjectWrapper import vtkCameraWrapper
 from core.data import DataReader
 from core.data import DataResizer
+#import matplotlib.pyplot as plt
+from vtk import VTK_FLOAT
+import math
+import numpy as np
+import scipy.io
+from vtk import vtkImageMathematics
+from vtk.util.numpy_support import vtk_to_numpy
+from vtk.util.numpy_support import numpy_to_vtk
+from vtk import vtkImageData
 
 
-class RenderController(QObject):
+class RenderControllerDeformationField(QObject):
 	"""
-	RenderController
+	RenderControllerDeformationField
 	"""
 	# Emitted when data is loaded by the project controller.
 	# RenderWidget should connect
@@ -54,12 +65,14 @@ class RenderController(QObject):
 		Set the renderWidget for direct control instead of Signal/Slot messages.
 		:type renderWidget: RenderWidget
 		"""
-		super(RenderController, self).__init__()
-
+		super(RenderControllerDeformationField, self).__init__()
+		print("RenderControllDeformField called")
 		self.renderWidget = renderWidget
-		self.visualizationTypes = [VisualizationTypeSimple, VisualizationTypeMIP]
+		self.visualizationTypes = [VisualizationTypeSimpleDeformation, VisualizationTypeSimpleDeformationJ,VisualizationTypeSimpleDeformationB]
 		self.visualizationType = None
 		self.imageData = None
+		self.imageDataMag = None
+		self.imageDataJ = None
 		self.visualization = None
 		self.visualizations = dict()  # Keep track of used volume properties
 		self.slices = [False, False, False]
@@ -72,6 +85,7 @@ class RenderController(QObject):
 		"""
 		:type fileName: str
 		"""
+		print("Hurray")
 		if fileName is None:
 			self.imageData = None
 			self.visualization = None
@@ -84,9 +98,65 @@ class RenderController(QObject):
 		# Read image data
 		dataReader = DataReader()
 		imageData = dataReader.GetImageData(fileName)
-		resizer = DataResizer()
-		self.imageData = resizer.ResizeData(imageData, maximum=25000000)
+		im = imageData
+		rows, cols, slice = im.GetDimensions()
+		sc = im.GetPointData().GetScalars()
+		import numpy as np
+		a = vtk_to_numpy(sc)
+		if len(a[0]) == 1:
+			imageData=im
+		else:
+			##print("It's a deformation field")
+			a = a.reshape(rows, cols, slice, -1,order='F')
+			############### Convert to vtkObject
+			#imageData = vtkImageData()
+			imageDataJ = vtkImageData()
+			imageDataMag = vtkImageData()
+			imageDataB = vtkImageData()
+			dimensions = a.shape
+			slices_no = 4 ###Set this
+			imageDataJ.SetDimensions(int(dimensions[0]), int(dimensions[1]), slices_no)
+			imageDataMag.SetDimensions(int(dimensions[0]), int(dimensions[1]), slices_no)
+			imageDataB.SetDimensions(int(dimensions[0]), int(dimensions[1]), slices_no)
+			imageDataJ.AllocateScalars(VTK_FLOAT, 1)
+			imageDataMag.AllocateScalars(VTK_FLOAT, 1)
+			imageDataB.AllocateScalars(VTK_FLOAT, 1)
+			print(a.shape)
+			Fx = a[:, :, :, 0];
+			Fy = a[:, :, :, 1];
+			Fz = a[:, :, :, 2];
+			##Compute the gradients
+			dFx = np.gradient(Fx)
+			dFy = np.gradient(Fy)
+			dFz = np.gradient(Fz)
+			mag_mat = np.add(np.multiply(a[:, :, :, 0],a[:, :, :, 0]),np.multiply(a[:, :, :, 1],a[:, :, :, 1]),np.multiply(a[:, :, :, 2],a[:, :, :, 2]))
+			for z in range(slices_no):
+				print(z)
+				for y in range(int(dimensions[1])):
+					for x in range(int(dimensions[0])):
+						if np.sqrt(mag_mat[x, y, z]) > 35:
+							jdet = np.linalg.det(np.array([[dFx[1][y, x, z], dFx[0][y, x, z], dFx[2][y, x, z]],
+													[dFy[1][y, x, z], dFy[0][y, x, z], dFy[2][y, x, z]],
+												[dFz[1][y, x, z], dFz[0][y, x, z], dFz[2][y, x, z]]]))
+							j = np.absolute(jdet)
 
+						if np.sqrt(mag_mat[x, y, z]) < 35:
+							j = 1
+
+						if j < 1:
+							value = j - 1
+						else:
+							value = 1 - 1 / j
+
+						imageDataMag.SetScalarComponentFromFloat(x, y, z, 0, np.sqrt(mag_mat[x,y,z]))
+						imageDataJ.SetScalarComponentFromFloat(x, y, z, 0, j)
+						imageDataB.SetScalarComponentFromFloat(x, y, z, 0, value)
+
+		self.imageData = imageDataMag
+		self.imageDataJ = imageDataJ
+		self.imageDataB = imageDataB
+		self.imageDataMag = imageDataMag
+		print(self.visualizationType)
 		# Give the image data to the widget
 		self.renderWidget.setData(self.imageData)
 		self.dataChanged.emit(self.imageData)
@@ -161,7 +231,7 @@ class RenderController(QObject):
 		"""
 		self.visualizationType = visualizationType
 		if self.visualizationType is None:
-			self.visualizationType = VisualizationTypeSimple
+			self.visualizationType = VisualizationTypeSimpleDeformation
 
 		if self.imageData is None:
 			return
@@ -171,14 +241,34 @@ class RenderController(QObject):
 			self.visualization.updateTransferFunction()
 		else:
 			self.visualization = VolumeVisualizationFactory.CreateProperty(self.visualizationType)
-			if self.visualizationType == VisualizationTypeSimple:
+			if self.visualizationType == VisualizationTypeSimpleDeformation:
 				if self.tag == "fixed":
 					self.visualization.color = self.visualization.colors[0]
 				elif self.tag == "moving":
 					self.visualization.color = self.visualization.colors[1]
-			self.visualization.setImageData(self.imageData)
-			self.visualization.updateTransferFunction()
-			self.visualizations[self.visualizationType] = self.visualization
+				else :
+					self.visualization.color = self.visualization.colors[1]
+
+		if (self.visualizationType == VisualizationTypeSimpleDeformationJ):
+			print("J function")
+			self.imageData = self.imageDataJ
+			self.renderWidget.setData(self.imageData)
+			self.dataChanged.emit(self.imageData)
+		if (self.visualizationType == VisualizationTypeSimpleDeformation):
+			print("Mag function")
+			self.imageData = self.imageDataMag
+			self.renderWidget.setData(self.imageData)
+			self.dataChanged.emit(self.imageData)
+		if (self.visualizationType == VisualizationTypeSimpleDeformationB):
+			print("B function")
+			self.imageData = self.imageDataB
+			self.renderWidget.setData(self.imageData)
+			self.dataChanged.emit(self.imageData)
+
+		self.visualization.setImageData(self.imageData)
+		self.visualization.updateTransferFunction()
+
+		self.visualizations[self.visualizationType] = self.visualization
 
 		self.renderWidget.setVolumeVisualization(self.visualization)
 		self.visualizationChanged.emit(self.visualization)
@@ -220,8 +310,14 @@ class RenderController(QObject):
 		volume property. This makes sure that the render widget takes
 		notice and renders accordingly.
 		"""
+
+		#self.visualization.setImageData(self.imageData)
+		#self.visualization.updateTransferFunction()
+		#self.visualizations[self.visualizationType] = self.visualization
 		self.renderWidget.setVolumeVisualization(self.visualization)
 		self.visualizationUpdated.emit(self.visualization)
+
+
 
 	def resetClippingBox(self):
 		self.renderWidget.resetClippingBox()

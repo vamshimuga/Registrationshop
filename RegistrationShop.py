@@ -44,6 +44,7 @@ from core.elastix import ParameterList
 from ui import MainWindow
 from ui import WindowDialog
 from ui import RenderController
+from ui import RenderControllerDeformationField
 from ui import MultiRenderController
 from ui.dialogs import FileTypeDialog
 from ui.dialogs import ElastixMainDialog
@@ -134,11 +135,11 @@ class RegistrationShop(MainWindow, WindowDialog):
 		# Render widgets
 		self.fixedDataWidget = RenderWidget()
 		self.movingDataWidget = RenderWidget()
-		self.multiDataWidget = MultiRenderWidget()
+		self.multiDataWidget = RenderWidget()####MedVis
 
 		self.fixedRenderController = RenderController(self.fixedDataWidget, "fixed")
 		self.movingRenderController = RenderController(self.movingDataWidget, "moving")
-		self.multiRenderController = MultiRenderController(self.multiDataWidget)
+		self.multiRenderController = RenderControllerDeformationField(self.multiDataWidget, "deformation")
 
 		# Give references of the render controllers to the project controller
 		projectController.fixedRenderController = self.fixedRenderController
@@ -159,8 +160,12 @@ class RegistrationShop(MainWindow, WindowDialog):
 		self.movingPropWidget.setFileChangedSignal(projectController.movingFileChanged)
 		self.movingPropWidget.setLoadDataSlot(self.loadMovingDataSetFile)
 
-		self.multiPropWidget = MultiRenderPropWidget(self.multiRenderController, parent=self)
+		#self.multiPropWidget = MultiRenderPropWidget(self.multiRenderController, parent=self)
+		self.multiPropWidget = RenderPropWidget(self.multiRenderController, parent=self)
 		self.multiPropWidget.setSizePolicy(sizePolicy)
+		self.multiPropWidget.setFileChangedSignal(projectController.multiFileChanged)
+		self.multiPropWidget.setLoadDataSlot(self.loadMultiDataSetFile)
+
 
 		self.verticalSplitter = QSplitter()
 		self.verticalSplitter.setOrientation(Qt.Vertical)
@@ -168,7 +173,7 @@ class RegistrationShop(MainWindow, WindowDialog):
 		# Create the layouts
 
 		fixedDataTitleWidget = TitleWidget("Fixed volume")
-		multiDataTitleWidget = TitleWidget("Fixed + Moving")
+		multiDataTitleWidget = TitleWidget("Deformation Field")
 		movingDataTitleWidget = TitleWidget("Moving volume")
 
 		fixedLayout = QGridLayout()
@@ -230,19 +235,20 @@ class RegistrationShop(MainWindow, WindowDialog):
 		"""
 		projectController = ProjectController.Instance()
 		projectController.fixedFileChanged.connect(self.fixedRenderController.setFile)
-		projectController.fixedFileChanged.connect(self.multiRenderController.setFixedFile)
+		#projectController.fixedFileChanged.connect(self.multiRenderController.setFixedFile)
 		projectController.movingFileChanged.connect(self.movingRenderController.setFile)
-		projectController.movingFileChanged.connect(self.multiRenderController.setMovingFile)
+		#projectController.movingFileChanged.connect(self.multiRenderController.setMovingFile)
+		projectController.multiFileChanged.connect(self.multiRenderController.setFile)
 		projectController.fixedSettingsChanged.connect(self.fixedRenderController.setRenderSettings)
 		projectController.movingSettingsChanged.connect(self.movingRenderController.setRenderSettings)
 		projectController.multiSettingsChanged.connect(self.multiRenderController.setRenderSettings)
 
-		self.fixedRenderController.visualizationChanged.connect(self.multiRenderController.setFixedVisualization)
-		self.fixedRenderController.visualizationUpdated.connect(self.multiRenderController.setFixedVisualization)
-		self.movingRenderController.visualizationChanged.connect(self.multiRenderController.setMovingVisualization)
-		self.movingRenderController.visualizationUpdated.connect(self.multiRenderController.setMovingVisualization)
+		#self.fixedRenderController.visualizationChanged.connect(self.multiRenderController.setFixedVisualization)
+		#self.fixedRenderController.visualizationUpdated.connect(self.multiRenderController.setFixedVisualization)
+		#self.movingRenderController.visualizationChanged.connect(self.multiRenderController.setMovingVisualization)
+		#self.movingRenderController.visualizationUpdated.connect(self.multiRenderController.setMovingVisualization)
 
-		self.multiDataWidget.transformations.transformationChanged.connect(self.movingDataWidget.transformationsUpdated)
+		#self.multiDataWidget.transformations.transformationChanged.connect(self.movingDataWidget.transformationsUpdated)
 
 	def createActions(self):
 		"""
@@ -331,7 +337,7 @@ class RegistrationShop(MainWindow, WindowDialog):
 		self.toolbarWidget.addActionLeft(self.actionDeformableTransformTool)
 
 		statusWidget = StatusWidget.Instance()
-		statusWidget.setText("Welcome to RegistrationShop!\nStart your registration by loading two datasets. "
+		statusWidget.setText("Welcome to MedVis project!\nStart your registration by loading two datasets. "
 			+ "After that you can use the transform tools to align your volume data.")
 		self.toolbarWidget.addCenterItem(statusWidget)
 
@@ -381,7 +387,8 @@ class RegistrationShop(MainWindow, WindowDialog):
 			self.transformTool.cleanUp()
 
 		self.transformTool = UserTransformationTool()
-		self.transformTool.setRenderWidgets(moving=self.movingDataWidget, multi=self.multiDataWidget)
+		#self.transformTool.setRenderWidgets(moving=self.movingDataWidget, multi=self.multiDataWidget)
+		self.transformTool.setRenderWidgets(moving=self.movingDataWidget)
 		self.multiPropWidget.setTransformTool(self.transformTool)
 		self.transformTool.toolFinished.connect(self.transformToolFinished)
 
@@ -491,6 +498,31 @@ class RegistrationShop(MainWindow, WindowDialog):
 				projectController.loadFixedDataSet(fileName)
 
 	@Slot()
+	def loadMultiDataSetFile(self):
+		"""
+        Open file dialog to search for data files. If valid data is given, it will
+        pass the data file location on to the slicer and the project controller.
+        """
+		dataReader = DataReader()
+		extensions = dataReader.GetSupportedExtensionsAsString()
+		fileName, other = QFileDialog.getOpenFileName(self, "Open Deformation Field", "", "Images (" + extensions + ")",
+													  options=QFileDialog.Directory)
+		if len(fileName) > 0:
+			# If there was another dataset first, ask if the user if the
+			# visualizations should be reset
+			projectController = ProjectController.Instance()
+			if projectController.currentProject.multiData:
+				dialog = ResetVisualizationDialog(self)
+				dialog.setWindowModality(Qt.WindowModal)
+				dialog.exec_()
+				if dialog.result is not None:
+					projectController.loadMultiDataSet(fileName)
+					if dialog.result:
+						self.multiRenderController.resetVisualizations()
+			else:
+				projectController.loadMultiDataSet(fileName)
+
+	@Slot()
 	def loadMovingDataSetFile(self):
 		"""
 		Open file dialog to search for data files. If valid data is given, it will
@@ -513,7 +545,7 @@ class RegistrationShop(MainWindow, WindowDialog):
 						self.movingRenderController.resetVisualizations()
 			else:
 				# Inserting an identity transform
-				self.multiDataWidget.transformations.append(Transformation(vtkTransform(), "No transform", fileName))
+				#self.multiDataWidget.transformations.append(Transformation(vtkTransform(), "No transform", fileName))
 				projectController.loadMovingDataSet(fileName)
 
 	@Slot()

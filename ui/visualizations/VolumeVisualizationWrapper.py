@@ -29,6 +29,7 @@ class VolumeVisualizationWrapper(object):
 			self.setVolumeVisualization(volumeVisualization)
 
 	def setVolumeVisualization(self, volumeVisualization):
+		print("Set viz wrapper called")
 		for attribute in VolumeVisualizationWrapper.standardAttributes:
 			if hasattr(volumeVisualization, attribute) and getattr(volumeVisualization, attribute) is not None:
 				setattr(self, attribute, getattr(volumeVisualization, attribute))

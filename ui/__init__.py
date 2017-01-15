@@ -1,4 +1,5 @@
 from MainWindow import MainWindow
 from WindowDialog import WindowDialog
 from RenderController import RenderController
+from RenderControllerDeformationField import RenderControllerDeformationField
 from MultiRenderController import MultiRenderController

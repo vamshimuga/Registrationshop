@@ -13,6 +13,9 @@ from vtk import vtkPiecewiseFunction
 # TODO: Render types are not suited for visualization names
 # If name is changed, then the visualization of older projec
 VisualizationTypeSimple = "Threshold"
+VisualizationTypeSimpleDeformation = "Magnitude"
+VisualizationTypeSimpleDeformationJ = "Jacobian"
+VisualizationTypeSimpleDeformationB = "Busking"
 VisualizationTypeGray = "Gray scale"
 VisualizationTypeCT = "CT"
 VisualizationTypeMIP = "MIP"

@@ -145,6 +145,7 @@ class VolumeVisualizationMIP(VolumeVisualization):
 		self.colorFunction, self.opacityFunction = CreateRangeFunctions(self.minimum, self.maximum, self.window, self.level, self.lowerBound, self.upperBound)
 		self.volProp.SetColor(self.colorFunction)
 		self.volProp.SetScalarOpacity(self.opacityFunction)
+		print("MIP function called")
 
 		lowerBound = (self.lowerBound - self.minimum) / (self.maximum - self.minimum)
 		upperBound = (self.upperBound - self.minimum) / (self.maximum - self.minimum)

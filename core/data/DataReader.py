@@ -3,6 +3,11 @@ DataReader
 
 :Authors:
 	Berend Klein Haneveld
+	
+	Adjustements by:
+	Rustam Alashrafov
+	Laura Jacquemod
+	Vamshi Muga
 """
 
 from vtk import vtkImageData
@@ -10,6 +15,12 @@ from vtk import vtkMetaImageReader
 from vtk import vtkXMLImageDataReader
 from vtk import vtkDICOMImageReader
 from vtk import vtkNrrdReader
+from vtk import VTK_FLOAT
+import math
+
+from vtk import vtkImageMathematics
+from vtk.util.numpy_support import vtk_to_numpy
+from vtk.util.numpy_support import numpy_to_vtk
 from DataController import DataController
 import os
 
@@ -74,11 +85,21 @@ class DataReader(DataController):
 			imageReader = vtkMetaImageReader()
 			imageReader.SetFileName(fileName)
 			imageReader.Update()
-			return imageReader.GetOutput()
+
+			#####Converting to numpy and then to vtk object
+			im = imageReader.GetOutput()
+			return im
+			#print(im.GetDimensions())
+			#print(len(a))
+			#print(a[0])
+			#print(a.shape)
+
+				
 		elif extension == DataReader.TypeDICOM:
 			# Use a dicom reader
 			dirName = os.path.dirname(fileName)
 			return self.GetImageDataFromDirectory(dirName)
+			
 		elif extension == DataReader.TypeDAT:
 			raise Exception("Support for .dat files is not implemented.")
 			# Read in the .dat file byte by byte
@@ -103,20 +124,25 @@ class DataReader(DataController):
 						for x in range(int(dimensions[0])):
 							imageData.SetScalarComponentFromFloat(x, y, z, 0, float(fileData[dataIndex]))
 							dataIndex += 1
+				print(type(fileData))
+				print(len(fileData))
 
 			return imageData
+			
 		elif extension == DataReader.TypeVTI:
 			# Use a XMLImageReader
 			imageReader = vtkXMLImageDataReader()
 			imageReader.SetFileName(fileName)
 			imageReader.Update()
 			return imageReader.GetOutput()
+			
 		elif extension == DataReader.TypeNRRD:
 			# Use a NrrdReader
 			imageReader = vtkNrrdReader()
 			imageReader.SetFileName(fileName)
 			imageReader.Update()
 			return imageReader.GetOutput()
+			
 		else:
 			assert False
 

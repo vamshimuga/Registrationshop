@@ -35,8 +35,9 @@ class RenderWidget(QWidget):
 
 		# Default volume renderer
 		self.renderer = vtkRenderer()
-		self.renderer.SetBackground2(0.4, 0.4, 0.4)
-		self.renderer.SetBackground(0.1, 0.1, 0.1)
+		self.renderer.SetBackground2(0.8, 0.8, 0.8)
+		#self.renderer.SetBackground(0.1, 0.1, 0.1)
+		self.renderer.SetBackground(0.8, 0.8, 0.8)
 		self.renderer.SetGradientBackground(True)
 		self.renderer.SetLayer(0)
 

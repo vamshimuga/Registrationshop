@@ -1,0 +1,84 @@
+!!python/object:core.project.Project.Project
+fixedData: null
+fixedSettings:
+  camera: !!python/object:core.vtkObjectWrapper.vtkCameraWrapper
+    clippingRange: !!python/tuple
+    - 0.01
+    - 1000.01
+    distance: 1.0
+    focalPoint: !!python/tuple
+    - 0.0
+    - 0.0
+    - 0.0
+    position: !!python/tuple
+    - 0.0
+    - 0.0
+    - 1.0
+    viewUp: !!python/tuple
+    - 0.0
+    - 1.0
+    - 0.0
+  clippingBox: false
+  clippingPlanes: true
+  slices:
+  - false
+  - false
+  - false
+  visualizationType: Threshold
+  visualizations: {}
+folder: !!python/unicode '/VamshiMainFolder/TUDelft/Courses/Medical_Visualization/Project/Registrationshop-master'
+isReference: null
+movingData: null
+movingSettings:
+  camera: !!python/object:core.vtkObjectWrapper.vtkCameraWrapper
+    clippingRange: !!python/tuple
+    - 0.01
+    - 1000.01
+    distance: 1.0
+    focalPoint: !!python/tuple
+    - 0.0
+    - 0.0
+    - 0.0
+    position: !!python/tuple
+    - 0.0
+    - 0.0
+    - 1.0
+    viewUp: !!python/tuple
+    - 0.0
+    - 1.0
+    - 0.0
+  clippingBox: false
+  clippingPlanes: true
+  slices:
+  - false
+  - false
+  - false
+  visualizationType: Threshold
+  visualizations: {}
+multiSettings:
+  camera: !!python/object:core.vtkObjectWrapper.vtkCameraWrapper
+    clippingRange: !!python/tuple
+    - 4.6352091256034385
+    - 9.297512386351
+    distance: 6.6921304299024635
+    focalPoint: !!python/tuple
+    - 11.0
+    - 11.0
+    - 1.0
+    position: !!python/tuple
+    - 11.0
+    - 11.0
+    - 7.6921304299024635
+    viewUp: !!python/tuple
+    - 0.0
+    - 1.0
+    - 0.0
+  clippingBox: false
+  clippingPlanes: true
+  slices:
+  - false
+  - false
+  - false
+  transformations: []
+title: null
+transformations: null

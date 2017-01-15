@@ -11,12 +11,13 @@ class Project(object):
 	Project holds the basic information of a project for RegistrationShop
 	"""
 
-	def __init__(self, title=None, fixedData=None, movingData=None, isReference=None):
+	def __init__(self, title=None, fixedData=None, movingData=None, multiData=None, isReference=None):
 		super(Project, self).__init__()
 
 		self.title = title
 		self.fixedData = fixedData
 		self.movingData = movingData
+		self.multiData = multiData
 		self.isReference = isReference
 		self.folder = None
 		self.fixedSettings = None

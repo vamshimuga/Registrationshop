@@ -24,6 +24,7 @@ class ProjectController(QObject):
 	# Signals
 	fixedFileChanged = Signal(basestring)
 	movingFileChanged = Signal(basestring)
+	multiFileChanged = Signal(basestring)###Medvis
 	fixedSettingsChanged = Signal(object)
 	movingSettingsChanged = Signal(object)
 	multiSettingsChanged = Signal(object)
@@ -157,3 +158,18 @@ class ProjectController(QObject):
 
 		# Emit signal that data set file name has changed
 		self.movingFileChanged.emit(self.currentProject.movingData)
+
+	@Slot(basestring)
+	def loadMultiDataSet(self, name=None):
+		"""
+        Sets the name in the current project as the moving data set filename
+        :param name: File name of moving data set
+        :type name: basestring
+        """
+		# TODO: some extra magic like checking if file exists
+		if name == self.currentProject.multiData:
+			return
+		self.currentProject.multiData = name
+
+		# Emit signal that data set file name has changed
+		self.multiFileChanged.emit(self.currentProject.multiData)

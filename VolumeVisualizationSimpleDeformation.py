@@ -1,11 +1,11 @@
 """
-VolumeVisualizationSimple
+VolumeVisualizationSimpleDeformation
 
 :Authors:
 	Berend Klein Haneveld
 """
 from VolumeVisualization import VolumeVisualization
-from VolumeVisualization import VisualizationTypeSimple
+from VolumeVisualization import VisualizationTypeSimpleDeformation
 from vtk import vtkVolumeProperty
 from vtk import vtkColorTransferFunction
 from vtk import vtkPiecewiseFunction
@@ -18,14 +18,14 @@ from PySide.QtGui import QGroupBox
 from PySide.QtCore import Qt
 
 
-class VolumeVisualizationSimple(VolumeVisualization):
+class VolumeVisualizationSimpleDeformation(VolumeVisualization):
 	"""
 	VolumeVisualization subclass for a simple visualization.
 	"""
 	def __init__(self):
-		super(VolumeVisualizationSimple, self).__init__()
+		super(VolumeVisualizationSimpleDeformation, self).__init__()
 
-		self.visualizationType = VisualizationTypeSimple
+		self.visualizationType = VisualizationTypeSimpleDeformation
 
 		# Create the volume property
 		self.volProp = vtkVolumeProperty()
@@ -142,7 +142,7 @@ class VolumeVisualizationSimple(VolumeVisualization):
 			self.upperBound = self.maximum
 			self.opacity = 1.0
 			return
-
+		print("Set image data called from mag")
 		self.minimum, self.maximum = imageData.GetScalarRange()
 		self.lowerBound = self.minimum
 		self.upperBound = self.maximum
@@ -165,20 +165,48 @@ class VolumeVisualizationSimple(VolumeVisualization):
 			self.colorFunction = vtkColorTransferFunction()
 		else:
 			self.colorFunction.RemoveAllPoints()
-		self.colorFunction.AddRGBPoint(self.minimum, r*0.7, g*0.7, b*0.7)
-		self.colorFunction.AddRGBPoint(self.maximum, r, g, b)
+		#Magnitude:
+		self.colorFunction.AddRGBPoint(self.lowerBound, 10/255, 0, 0)
+		self.colorFunction.AddRGBPoint(self.minimum, 10/255, 0, 0)
+		self.colorFunction.AddRGBPoint(self.minimum+(self.maximum-self.minimum)/3,1,0,1/255)
+		self.colorFunction.AddRGBPoint(self.minimum+2*(self.maximum-self.minimum)/3,59/255,100/255,100/255)
+		self.colorFunction.AddRGBPoint(self.maximum, 1, 1, 1)
+		self.colorFunction.AddRGBPoint(self.upperBound, 1, 1, 1)
+		
+		#Jacobian:
+		#self.colorFunction.AddRGBPoint(self.lowerBound, 0, 0, 1)
+		#self.colorFunction.AddRGBPoint(0, 0, 0, 1)
+		#self.colorFunction.AddRGBPoint(1,0,1,0)
+		#self.colorFunction.AddRGBPoint(self.upperBound, 1, 0, 0)
+		#Growth:
+		#self.colorFunction.AddRGBPoint(self.lowerBound, 0, 184/255, 204/255)
+		#self.colorFunction.AddRGBPoint(0,0, 184/255, 204/255)
+		#self.colorFunction.AddRGBPoint(0.00000000000001, 199/255, 212/255, 33/255)
+		#self.colorFunction.AddRGBPoint(self.upperBound, 199/255, 212/255, 33/255)
+		
 
 		if not self.opacityFunction:
 			self.opacityFunction = vtkPiecewiseFunction()
 		else:
 			self.opacityFunction.RemoveAllPoints()
-		self.opacityFunction.AddPoint(self.minimum, 0)
+		#Magnitude:
 		self.opacityFunction.AddPoint(self.lowerBound, 0)
-		self.opacityFunction.AddPoint(self.lowerBound+0.0001, self.opacity)
-		self.opacityFunction.AddPoint(self.upperBound-0.0001, self.opacity)
-		self.opacityFunction.AddPoint(self.upperBound, 0)
-		self.opacityFunction.AddPoint(self.maximum+0.0001, 0)
-
+		self.opacityFunction.AddPoint(self.minimum, 0)
+		self.opacityFunction.AddPoint(self.maximum, self.opacity)
+		self.opacityFunction.AddPoint(self.upperBound, self.opacity)
+		#Jacobian:
+		#self.opacityFunction.AddPoint(self.lowerBound,0)
+		#self.opacityFunction.AddPoint(0, 1)
+		#self.opacityFunction.AddPoint(1,0)
+		#self.opacityFunction.AddPoint(self.upperBound, 1)
+		
+		#Growth:
+		#self.opacityFunction.AddPoint(self.lowerBound, 1)
+		#self.opacityFunction.AddPoint(self.minimum,1)
+		#self.opacityFunction.AddPoint(0,0)
+		#self.opacityFunction.AddPoint(self.upperBound, 1)
+		#self.opacityFunction.AddPoint(self.maximum,1)
+		
 		self.volProp.SetColor(self.colorFunction)
 		self.volProp.SetScalarOpacity(self.opacityFunction)
 
