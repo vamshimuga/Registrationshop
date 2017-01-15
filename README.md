@@ -1,5 +1,9 @@
 # Registrationshop
 
+##This repository provides a way to visualize deformation fields. This was carried out as a course project for Medical Visualization at TU Delft. The original UI of registration shop is retained and we added our own specific visualization and the necessary transfer functions to deal with deformation fields.(The input for the deformation field has to be in .mhd format).
+
+##Description and installation instructions for registration shop(the installation procedure remains the same)
+
 Interactive registration tool for 3D medical datasets.
 
 ![Screenshot of the Registrationshop user interface](https://graphics.tudelft.nl/wp-content/uploads/2013/09/maininterfacelungs.png)
